@@ -1,0 +1,62 @@
+---
+title: "Identifying the Changes of Social Diversity in Auckland City under the COVID-19 Impacts"
+author: Qingqing Chen
+date: "Last compiled date: `r format(Sys.time(), '%d %B, %Y')`"
+bibliography: references.bib
+---
+
+<style>
+body {text-align: justify}
+</style>
+
+
+# Introduction 
+
+The COVID-19 virus has caused unprecedented impacts on people's day-to-day life, where cities around the world are still very much suffering from the pandemic. In order to combat the pandemic, different countries have implemented a series of stringent policies to mitigate the transmission of the virus. Accompanying these preventive measures are the potential changes in human movement trajectories. What does this mean to the urban environment and social activities that we know before the pandemic? How does human footprints change over time under the impacts of the pandemic? With the new emerging big data and crowd sourcing techniques, a wealth of geospatial data, such as location-based services (LBS), volunteered geographic information (VGI) data, is becoming more and more available. This provides the potentials for analyzing human mobility patterns at a much granular scale. In this project, I aim to analyze human mobility patterns over time to identify the potential changes of social diversity by leveraging mobile location data. The social diversity here refers to the diversity of home locations of visitors in an urban space. In other words, instead of focusing on the physical environment, the diversity is measured from the perspective of the social dimension of urban spaces based on the activity profiles of their visitors. Taking Auckland city as a case study, I try to answer three specific questions as listed below: 
+
+1. How does social diversity change over time under the COVID-19 pandemic? 
+2. Where are the most diverse neighbourhoods? 
+3. Are there any similar character(s) of neighbourhoods with a relatively high value of diversity? 
+
+# Data 
+
+**1. Auckland city boundary**
+
+A shape file provides urban and rural areas for all New Zealand. The data is collected from [Land Information New Zealand](https://koordinates.com/from/data.linz.govt.nz/layer/104830/). The downloaded data is stored under `data/raw/lds-fire-and-emergency-nz-localities-SHP` folder.   
+
+**2. New Zealand State Highway Centrelines**
+
+A shape file provides the centrelines of New Zealand's state highway system. The data is collected from [NZ Transport Agency](https://nzta.koordinates.com/layer/1331-nz-state-highway-centrelines/). The downloaded data is stored under `data/raw/nz-state-highway-centrelines-SHP/` folder. 
+**3. Hexagonal grid cells data set**
+
+A data set that contains hexagonal grid cells with a 300 meter resolution covering the study area (i.e., Auckland city). Each 300m hexagonal grid cell is considered as a neighbourhood, which is used as the basic unit for subsequent analysis. The data set is stored under `data/raw/grids_shp/` folder. 
+
+**4. Individual mobile location data set**
+
+An anonymized mobile location data set collected in Auckland city in 2020 is used in this project. The data is provided by a third party named [Quadrant](https://www.quadrant.io/), which is a global leader in mobile location data, POI data, and corresponding compliance services. The data contains three variables as listed below: 
+
+  - **User ID**: the unique identifier for each mobile phone user
+  - **Timestamp**: the specific timestamp for each data point created.  
+  - **Location**: the location of each data point created. 
+  
+As the entitle data set has millions of data points. A random subset (~ # count number data points) is created by random sampling, which is used in this project. The subset sample is stored under the `data/raw/` folder. 
+
+
+**5. Home locations data set** 
+
+A data set records the inferred home locations of users. The home locations are inferred based on users' footprints by applying the HMLC homelocator algorithm [@chen_identifying_2021]. As the home locations are the foundation for constructing home-to-destination networks, I use the entire data set instead of the subset to infer the home locations. The detailed steps for identifying home locations are not included in this project but the results are directly provided as the data source for the subsequent diversity analysis. The data set is stored under the `data/raw/` folder. 
+
+# Methodology 
+
+To operationalize diversity, I apply the concept of biological diversity from ecology [@tramer_bird_1969; @maignan_bio-ecological_2003] and use Shannon's index ($H$) to measure the diversity. The formular of Shannon's index is shown below: 
+
+$$H = -\sum_{i = 1}^{S}p_ilnp_i$$
+where $p_i$ is the proportion of users that allied to "species" $i$ (i.e., sectors in this study) and $S$ is the frequency of "species". 
+
+The sectors are constructed based on different radius distance and directions [@chen_entangled_2021] (see Fig. XX), where visitors visiting from the same sectors are considered as the same "species". 
+
+![]()
+
+In order to compare the changes of diversity over time, I separate the whole study period to multiple ranges with a interval of two weeks. Subsequently, the spatial distribution of the social diversity during different time periods are presented to help visualize and compare the potential changes of diversity across the city. In addition, an interactive dashboard is designed to dive into each neighborhood for understanding where visitors in an urban space come from. 
+
+# References
