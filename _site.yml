@@ -1,15 +1,18 @@
 output_dir: 'docs'
 output:
   html_document:
-    theme: simplex  # choose your theme here: https://bootswatch.com/
+    theme: cerulean  # choose your theme here: https://bootswatch.com/
     highlight: textmate
-    mathjax: null
+    mathjax: local
+    self_contained: true
+    thumbnails: false
+    lightbox: false
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float:
        collapsed: true
-       smooth_scroll: true
-       number_sections: true
+    smooth_scroll: true
+    number_sections: true
     includes:
       after_body: include/after_body.html
     css: styles.css

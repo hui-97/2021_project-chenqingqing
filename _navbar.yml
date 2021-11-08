@@ -1,5 +1,8 @@
-title: "Spatial Data Science Final Project"
+title: "GEO511 Spatial Data Science Final Project"
 type: inverse
 left:
-  - text: "Home"
+  - text: "Introduction"
+    href: intro.html
+  - text: "Analysis"
     href: index.html
+
