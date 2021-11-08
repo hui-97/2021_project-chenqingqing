@@ -1,105 +1,182 @@
 ---
-title: "My Final Project Template"
-author: Your name here
-subtitle: Subtitle here if desired
+title: "Data Analysis and Visualization"
+author: Qingqing Chen
+date: "Last compiled date: `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+editor_options: 
+  chunk_output_type: console
 ---
 
-# Introduction
+# Pre-request
 
-[~ 200 words]
-
-Clearly stated background and questions / hypotheses / problems being addressed. Sets up the analysis in an interesting and compelling way.
-
-# Materials and methods
-
-[~ 200 words]
-
-Narrative: Clear narrative description of the data sources and methods. Includes data from at least two sources that were integrated / merged in R.
-
-Code: The code associated with the project is well organized and easy to follow. Demonstrates mastery of R graphics and functions.
-
-Data: The underlying data are publicly accessible via the web and downloaded/accessed within the Rmd script. If you want to use your own data, you must make it available on a website (e.g. Figshare) so that others are able to re-run your code.
-
-You can do bullets like this:
-
-* The first most important thing
-* The second most important thing
-* The third most important thing
-
-You can do numbers like this:
-
-1. The first most important thing
-2. The second most important thing
-3. The third most important thing
-
-See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the amazing things you can do.
-
-
-Here's my first code chunk.
-```{r}
-1+2
-```
-
-Load any required packages in a code chunk (you may need to install some packages):
-
+## Import necessary packages
 ```{r, message=F, warning=F}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, cache=TRUE, 
+                      fig.width = 10, fig.height = 10)
 library(tidyverse)
-library(leaflet)
-library(kableExtra)
-knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
+library(dplyr)
+library(sf)
+library(tmap)
+library(here)
+library(ggplot2)
+library(RColorBrewer)
+library(vegan) # diversity analysis
+library(purrr) # parallel mapping 
+library(purrrogress) 
+library(DT)
 ```
 
-## Download and clean all required data
+# Data Preparation 
+
+## Study area: Auckland city
+
+Figure 1 represents the study area - Auckland city in New Zealand. 
+
 ```{r}
-n=20
-data=data.frame(x=runif(n,-180,180),
-                y=runif(n,-60,60),
-                size = runif(n, 5, 20),
-                category = factor(
-                  sample(letters[1:5], n, replace = TRUE)
-                  ),
-                value = rnorm(n))
+# New Zealand boundary
+sf_akl <- read_sf(here("data/raw/lds-fire-and-emergency-nz-localities-SHP/fire-and-emergency-nz-localities.shp")) %>%
+  dplyr::select(id, city_name, geometry) %>% # only select needed attributes to reduce the space 
+  filter(city_name == "Auckland") %>% # filter city name that is called Auckland (i.e., the study area in this project) 
+  st_transform(crs = 2193) # convert crs to New Zealand
+
+# New Zealand highway centrelines
+highway_centrlines <- read_sf(here("data/raw/nz-state-highway-centrelines-SHP/nz-state-highway-centrelines.shp")) %>% 
+  st_transform(crs = 2193) %>% # convert crs to New Zealand
+  st_join(., sf_akl) %>% # spatial join with Auckland boundary
+  filter(!is.na(city_name)) # remove highway centrelines that is not within Auckland city
+
+# hexagonal grid cell
+grids <- read_sf(here("data/raw/grids_shp/grids300.shp"), quiet = T) %>% 
+  st_transform(crs = 2193)
 ```
 
-```{r, results='asis'}
-data %>% 
-  slice(1:10) %>% #show only 1:n rows
-  kable(digits=2,align="c")%>% #make table and round to two digits
-  kable_styling(bootstrap_options = 
-                  c("striped", "hover", "condensed", "responsive")) #apply other formatting
+
+```{r eval=F}
+# create a map to overview the study area 
+p_auckland <- tm_shape(sf_akl) +
+    tm_borders(col = "grey") +
+    tm_shape(highway_centrlines) +
+    tm_lines() +
+    tm_shape(grids) +
+    tm_borders(col = "blue", alpha = 0.7) +
+    tm_layout(frame = F, 
+              title = "Study area: Auckland, New Zealand", 
+              title.position = c("left", "top"), 
+              title.size = 0.8) 
+tmap_save(p_auckland, here("img/auckland.png"))
 ```
 
-Add any additional processing steps here.
+![Figure 1. The study area - Auckland city, New Zealand.](img/auckland.png)
+
+## Mobile location data of users
+
+To help get sense of the mobile location data, I take 30 data points as examples and present them in Table 1. Each data point includes four attributes:
+
+- `u_id`: the unique identifier for each user;
+- `timestamp`: the specific time for each data point created;
+- `grid_id`: the location for each data point created;
+- `home`: the inferred home location of each user.
+
+
+```{r}
+# identified home locations 
+identified_hms <- readRDS(here("data/raw/hm_hmlc.rds")) %>% 
+  mutate(home = as.integer(home))
+
+# mobile location data points of users 
+df <- readRDS(here("data/raw/mobility_sample.rds")) %>% 
+  sample_frac(size = 1) 
+
+# join home locations to users 
+df <- df %>% left_join(., identified_hms, by = c("u_id" = "u_id"))
+DT::datatable(df %>% head(30),
+              options = list(pageLength = 5), 
+              caption = "Table 1: Random examples of the mobile location data.")
+```
+
+
+# Social Diversity Analysis
+
+## Separate data with biweek interval
+
+In order to compare the potential changes of diversity over time, the first step is to separate the data into multiple periods. I use a two-week interval and separate the data into 26 periods.
+
+```{r}
+# create break points of every two weeks 
+biweekly_seqs <- seq(as.POSIXct("2020-01-01"), as.POSIXct("2020-12-31"), by = "2 weeks") %>%
+  as.Date() 
+
+# give each period a label, easier for subsequent analysis
+prepare_labels <- function(index.start, index.end, weekly_seqs){
+  start_day <- weekly_seqs[index.start] %>% format(., "%b %d")
+  end_day <- weekly_seqs[index.end] %>% format(., "%b %d")
+  paste(start_day, "-", end_day)
+}
+biweek_labels <- map2_chr(seq(1, 26, 1), seq(2, 27, 1), function(x, y) prepare_labels(x, y, biweekly_seqs))
+
+# separate biweek data and store them 
+get_biweekly_data <- function(df, biweek_labels, index.start, index.end){
+  output <- df %>%
+    mutate(date = as.Date(timestamp)) %>% 
+    filter(date >= biweekly_seqs[index.start] & date < biweekly_seqs[index.end]) %>% 
+    mutate(period = biweek_labels[index.start])
+  saveRDS(output, file = paste0(here("data/derived/biweekly-data/biweek_"), index.start, ".rds"))
+}
+
+## if function: if all biweekly data files exist, do not need to re-run the get_biweekly_data fun
+if(length(list.files(here("data/derived/biweekly-data"), pattern = "*.rds")) != 26){
+  ## parallel mapping
+  map2(seq(1, 26, 1), seq(2, 27, 1), function(x, y) get_biweekly_data(df, biweek_labels, x, y))
+}
+```
+
+## Construct spatial sectors 
+```{r}
+
+```
+
+## Analyze diversity 
+
+```{r}
+
+```
+
+
+
+
+<!-- ## Expected results -->
+
+<!-- 1. The social diversity does change under the COVID-19 impacts.  -->
+<!-- 2. The diversity around CDB may have a significant change.  -->
+<!-- 3. Neighborhoods with relatively high diversity may have similar character(s) or certain urban functions.  -->
+<!-- 4. The most dense place may not be the most diverse place. -->
+
 
 # Results
 
-[~200 words]
+<!-- [~200 words] -->
 
-Tables and figures (maps and other graphics) are carefully planned to convey the results of your analysis. Intense exploration and evidence of many trials and failures. The author looked at the data in many different ways before coming to the final presentation of the data.
+<!-- Tables and figures (maps and other graphics) are carefully planned to convey the results of your analysis. Intense exploration and evidence of many trials and failures. The author looked at the data in many different ways before coming to the final presentation of the data. -->
 
-Show tables, plots, etc. and describe them.
+<!-- Show tables, plots, etc. and describe them. -->
 
 ```{r, fig.width=6, fig.height=3, fig.cap="Map of completely random data"}
-m <- leaflet(data) %>% 
-  addTiles() %>% 
-  addCircleMarkers(~x, ~y, radius = ~size,color = ~as.factor(category)) %>% 
-  addPopups(~x[2], ~y[2], "Random popup")
-m  # a map with the default OSM tile layer
+
 ```
 
 
 ```{r}
-data %>% 
-  ggplot(aes(x=x,y=y,col=category))+
-  geom_point()
+
 ```
 
 # Conclusions
 
-[~200 words]
+<!-- [~200 words] -->
 
-Clear summary adequately describing the results and putting them in context. Discussion of further questions and ways to continue investigation.
+<!-- Clear summary adequately describing the results and putting them in context. Discussion of further questions and ways to continue investigation. -->
 
 # References
 
-All sources are cited in a consistent manner
+<!-- All sources are cited in a consistent manner -->
