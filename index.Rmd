@@ -24,7 +24,6 @@ library(ggplot2)
 library(RColorBrewer)
 library(vegan) # diversity analysis
 library(purrr) # parallel mapping 
-library(purrrogress) 
 library(DT)
 ```
 
@@ -133,9 +132,120 @@ if(length(list.files(here("data/derived/biweekly-data"), pattern = "*.rds")) != 
 ```
 
 ## Construct spatial sectors 
-```{r}
 
+To operationalize diversity, one important step is to construct the spatial sectors. The dynamic sectors change along with grid cell locations is created based on different radius distance and directions [@chen_entangled_2021]. An example of spatial sectors of a grid cell is shown in Figure 2, where visitors visiting from the same sectors are considered as the same "species". The concept of "species" will be used in the subsequent diversity analysis. 
+
+```{r}
+# step 1: get centers of grid cells 
+grid_centroids <- grids %>% st_centroid()
 ```
+
+```{r}
+# step 2: create buffers for each grid cell 
+## buffer radius
+radius <- c(1000, 3000, 5000, 7000, 10000, 20000, 30000, 60000)
+## draw buffers 
+draw_buffers <- function(df_centroids, radius, grid_index){
+  grid_centroid <- df_centroids %>% filter(grid_id == grid_index)
+  buffers <- list()
+  for (i in 1:length(radius)){
+    if(i == 1){
+      buffers[[i]] <- grid_centroid %>% 
+        st_buffer(., dist = radius[1]) %>% 
+        mutate(radius = radius[1])
+    } else{
+      buffers[[i]] <- st_difference(
+        grid_centroid %>% st_buffer(., dist = radius[i]),
+        grid_centroid %>% st_buffer(., dist = radius[i-1])) %>% 
+        dplyr::select(-grid_id.1) %>% 
+        mutate(radius = radius[i])
+    }
+  }
+  do.call(rbind, buffers)
+}
+
+##!!!note: this step takes more than 1 hour, the processed data is stored in `data/derived/` folder, which can be directly loaded. 
+## process all grid cells 
+if(file.exists(here("data/derived/grid_buffers.rds"))){
+  grid_buffers <- readRDS(here("data/derived/grid_buffers.rds"))
+}else{
+  # parallel mapping 
+  grid_buffers <- map_df(grid_centroids$grid_id, function(x) draw_buffers(grid_centroids, radius, x))
+  saveRDS(grid_buffers, file = here("data/derived/grid_buffers.rds"))
+}
+```
+
+```{r}
+# step 3: cut buffers to create spatial sectors 
+##cut single buffer
+cut_buffer <- function(buffer, buffer_id, blades, grid_index){
+  lwgeom::st_split(st_geometry(buffer[buffer_id, ]), blades) %>%
+    st_collection_extract("POLYGON") %>%
+    st_sf() %>%
+    mutate(grid_id = grid_index) %>%
+    dplyr::select(grid_id) 
+}
+
+get_cut_buffer <- function(df_centroids, df_buffers, shift, grid_index, crs = 2193){
+  # get input grid centroid
+  centroid <- df_centroids %>% 
+    filter(grid_id == grid_index) %>% 
+    st_coordinates() %>%
+    as_tibble() %>%
+    set_names(c("lon", "lat")) # convert geometry to lon and lat
+  # create blades
+  blades <- st_linestring(
+    rbind(c(centroid$lon+shift, centroid$lat),
+          c(centroid$lon-shift, centroid$lat),
+          c(centroid$lon, centroid$lat),
+          c(centroid$lon, centroid$lat+shift),
+          c(centroid$lon, centroid$lat-shift))) %>%
+    st_sfc(., crs = crs)
+  # get buffer for input grid 
+  buffer <- df_buffers %>% filter(grid_id == grid_index)
+  buffer1 <- buffer[1, ] %>% dplyr::select(grid_id) 
+  buffer <- buffer[-1, ] ## do not cut the first inner buffer
+  buffer_ids <- 1:nrow(buffer)
+  ## embed function within another function
+  rbind(buffer1, do.call(rbind, map(buffer_ids, function(x) cut_buffer(buffer, x, blades, grid_index)))) %>%
+    rowid_to_column(var = "sector_id") 
+}
+
+# process all grid cells 
+if(file.exists(here::here("data/derived/grid_sectors.rds"))){
+  grid_sectors <- readRDS(here::here("data/derived/grid_sectors.rds"))
+}else{
+  # parallel mapping 
+  grid_sectors <-  map_df(grid_centroids$grid_id, function(x) get_cut_buffer(grid_centroids, grid_buffers, shift = 60000, x))
+  saveRDS(grid_sectors, file = here::here("data/derived/grid_sectors.rds"))
+}
+```
+
+
+```{r eval=F}
+grid_sectors_example <- grid_sectors %>% 
+  filter(grid_id == 15955) %>% 
+  mutate(sector_id = factor(sector_id))
+
+sectors_showcase <- grid_sectors_example %>% 
+  st_intersection(grids, .) %>% 
+  group_by(sector_id) %>% 
+  summarise() 
+
+p_sector_showcase <- tm_shape(grids) +
+  tm_polygons(col = "white", alpha = 0.1, border.col = "grey") +
+  tm_shape(sectors_showcase) +
+  tm_polygons(col = "sector_id", border.col = "purple", alpha = 0.9) +
+  tm_shape(grids %>% filter(grid_id == 15955)) +
+  tm_polygons(col = "red") +  ## target grid 
+  tm_shape(grid_sectors_example) +
+  tm_borders(col = "purple", lty = 2) +
+  tm_text(text = "sector_id", size = 0.6, col = "black") + 
+  tm_layout(legend.show = FALSE)
+tmap_save(p_sector_showcase, here("img/p_sector_showcase.png"))
+```
+
+![Figure 2. An example of spatial sectors of a grid cell.](img/p_sector_showcase.png)
 
 ## Analyze diversity 
 
