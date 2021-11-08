@@ -53,7 +53,7 @@ To operationalize diversity, I apply the concept of biological diversity from ec
 $$H = -\sum_{i = 1}^{S}p_ilnp_i$$
 where $p_i$ is the proportion of users that allied to "species" $i$ (i.e., sectors in this study) and $S$ is the frequency of "species". 
 
-The sectors are constructed based on different radius distance and directions [@chen_entangled_2021] (see Fig. XX), where visitors visiting from the same sectors are considered as the same "species". 
+The sectors are constructed based on different radius distance and directions [@chen_entangled_2021], where visitors visiting from the same sectors are considered as the same "species". 
 
 ![]()
 
