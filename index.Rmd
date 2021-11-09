@@ -249,12 +249,166 @@ tmap_save(p_sector_showcase, here("img/p_sector_showcase.png"))
 
 ## Analyze diversity 
 
-```{r}
+After constructing spatial sectors for each grid cell, I apply the concept of biological diversity from ecology [@tramer_bird_1969; @maignan_bio-ecological_2003] and use Shannon's index ($H$) to measure the diversity. The Shannon's index is calculated as: 
 
+$$H = -\sum_{i = 1}^{S}p_ilnp_i$$
+
+where $p_i$ is the proportion of users that allied to "species" $i$ (i.e., sectors in this study) and $S$ is the frequency of "species". 
+
+```{r eval=F}
+## compute users in each visited grid
+get_visitors_in_visited_grid <- function(users_in_grids, grid_index, grids, identified_hms){
+  users <- users_in_grids %>% filter(grid_id == grid_index)
+  users %>%
+    left_join(., identified_hms) %>%
+    na.omit() %>%
+    rename(visited_grid = grid_id) %>%
+    filter(home != grid_index) %>%  ##remove locals
+    left_join(., grids, by = c("home" = "grid_id")) %>%
+    rename(home_geometry = geometry) %>%
+    st_as_sf(crs = 2193)
+}
+
+cal_diversity <- function(visitors_in_visited_grids, grid_sectors, sf_akl, grids, list_grids, index){
+  ##visitors in the visited grid
+  visitors_in_visited_grid <- visitors_in_visited_grids[[index]]
+
+  if(nrow(visitors_in_visited_grid) == 0){
+    output <- tibble()
+  }else{
+    ## visited grid id
+    visited_grid <- unique(visitors_in_visited_grid$visited_grid)
+
+    if(visited_grid %in% list_grids){
+      ## remove locals
+      visitors_in_visited_grid <- visitors_in_visited_grid %>%
+        filter(home != visited_grid)
+
+      ## sectors of the visited grid
+      visited_grid_cutted_buffers <- grid_sectors %>% filter(grid_id == visited_grid)
+      ## sectors within auckland
+      ack_buffer_regions <- st_join(visited_grid_cutted_buffers, sf_akl) %>%
+        na.omit() %>%
+        dplyr::select(-id, -city_name) %>%
+        unique()
+
+      ## get visitors in each regions and remove the duplicates
+      df_joined <- st_join(ack_buffer_regions, visitors_in_visited_grid) %>% na.omit()
+      df_joined_drop_duplicates <- df_joined[!duplicated(df_joined$u_id), ]
+
+      output <- df_joined_drop_duplicates %>%
+        group_by(sector_id) %>%
+        dplyr::summarise(n_user = n_distinct(u_id)) %>%
+        ungroup() %>%
+        mutate(area_km_square = as.numeric(st_area(.)/1000000)) %>%
+        mutate(user_density_per_km = n_user/area_km_square) %>%
+        st_set_geometry(NULL) %>%
+        distinct(sector_id, user_density_per_km) %>%
+        spread(sector_id, user_density_per_km) %>%
+        diversity(index = "shannon") %>%
+        tibble::enframe(name = NULL) %>%
+        mutate(visited_grid = visited_grid) %>%
+        dplyr::select(visited_grid, value) %>%
+        dplyr::rename(div = value)
+    }else{
+      output <- tibble()
+    }
+  }
+  return(output)
+}
+
+# calculate diversity 
+cal_diversity_biweek <- function(file.nm, label.date_range){
+  # get file path 
+  file_to_read <- paste0(here("data/derived/biweekly-data/"), file.nm, ".rds")
+  
+  # read biweekly data 
+  df <- readRDS(file_to_read)
+  
+  # grids with data records 
+  grid_ids <- df$grid_id %>% unique()
+  
+  # distinct users in each grid 
+  users_in_grids <- df %>% distinct(u_id, grid_id)
+  
+  # filter visitors in each grid cell, i.e., users whose home locations are not the same as the visited grid cells 
+  message("Start aggregating visitors...")
+  visitors_in_visited_grids <- map(grid_ids, function(x) get_visitors_in_visited_grid(users_in_grids, x, grids, identified_hms))
+  message("Finish aggregating visitors!")
+  
+  # filter grid with at least 2 visitors
+  list_grids <- do.call(bind_rows, visitors_in_visited_grids) %>%
+    st_set_geometry(NULL) %>%
+    group_by(visited_grid) %>%
+    summarise(n = n_distinct(u_id)) %>%
+    filter(n >= 2) %>% # filter grid with at least 2 visitors
+    pull(visited_grid)
+  
+  # measure diversity
+  message("Start calculating diveristy...") 
+  diversity_shannon <- do.call(rbind, map(1:length(visitors_in_visited_grids), function(x) cal_diversity(visitors_in_visited_grids, grid_sectors, sf_akl, grids, list_grids, x)))
+  # modify the diversity (normalize)
+  diversity_shannon <-  diversity_shannon %>% 
+      left_join(., grids, by = c("visited_grid" = "grid_id")) %>%
+      st_as_sf() %>%
+      st_transform(crs = 2193) %>% 
+      mutate(norm_div = (div - min(div))/(max(div) - min(div)),
+             norm_div = round(norm_div, 2), 
+             date_range = label.date_range) %>% 
+      dplyr::select(visited_grid, div, norm_div, date_range)
+  message("Finish calculating diversity!")
+  
+  # save the result
+  saveRDS(diversity_shannon, file = paste0(here("data/derived/biweekly-diversity/"), "div_", file.nm, ".rds"))
+}
+
+files <- paste0("biweek_", seq(1, 26, 1))
+##!!note: this process takes around 5 hrs, the computed results are stored under `data/derived/biweekly-diversity` folder
+map2(files, biweek_labels, purrrogress::with_progress(function(x, y) cal_diversity_biweek(file.nm = x, label.date_range = y)))
 ```
 
 
+```{r}
+# load computed diversity 
+file_pathes <- paste0(here::here("data/derived/biweekly-diversity/"), "div_biweek_", seq(1, 26, 1), ".rds")
+df_divs <- map(file_pathes, function(x) readRDS(x))
+df_divs[[1]] %>% head()
+```
 
+```{r}
+spatial_viz <- function(df_div, main.title_size = 1, legend.title_size = 0.5,  
+                        legend.text_size = 0.35, legend_width = 0.5){
+  range_biweek <- df_div$date_range %>% unique()
+  tm_shape(sf_akl) +
+      tm_borders(col = "grey") + 
+      tm_shape(highway_centrlines) +
+      tm_lines(col = "grey20", lwd = 2, alpha = 0.7) +
+      tm_shape(df_div) +
+      tm_fill("norm_div",
+              palette = "OrRd",
+              style = "fixed",
+              breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0),
+              legend.is.portrait = T,
+              legend.format = list(digits = 2),
+              title = "Norm.Diversity") +
+    tm_layout(main.title = paste0("Period: ", range_biweek),
+              main.title.size = main.title_size,
+              frame = FALSE,
+              legend.frame = F,
+              legend.bg.color = "white",
+              legend.title.size = legend.title_size,
+              legend.text.size = legend.text_size,
+              legend.width = legend_width,
+              legend.position = c("right", "top"))
+}
+
+pics_div <- map(df_divs, function(x) spatial_viz(x))
+```
+
+
+```{r}
+p_map1to9 <- tmap_arrange(pics_div[1:9], nrow = 3, ncol = 3)
+```
 
 <!-- ## Expected results -->
 
