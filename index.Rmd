@@ -35,10 +35,7 @@ Figure 1 represents the study area - Auckland city in New Zealand.
 
 ```{r}
 # New Zealand boundary
-sf_akl <- read_sf(here("data/raw/lds-fire-and-emergency-nz-localities-SHP/fire-and-emergency-nz-localities.shp")) %>%
-  dplyr::select(id, city_name, geometry) %>% # only select needed attributes to reduce the space 
-  filter(city_name == "Auckland") %>% # filter city name that is called Auckland (i.e., the study area in this project) 
-  st_transform(crs = 2193) # convert crs to New Zealand
+sf_akl <- read_sf(here("data/raw/auckland-boundary/auckland_boundary.shp"))
 
 # New Zealand highway centrelines
 highway_centrlines <- read_sf(here("data/raw/nz-state-highway-centrelines-SHP/nz-state-highway-centrelines.shp")) %>% 
