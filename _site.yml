@@ -3,7 +3,7 @@ output:
   html_document:
     theme: cerulean  # choose your theme here: https://bootswatch.com/
     highlight: textmate
-    mathjax: local
+    # mathjax: local
     self_contained: true
     thumbnails: false
     lightbox: false
