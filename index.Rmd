@@ -90,6 +90,9 @@ df <- df %>% left_join(., identified_hms, by = c("u_id" = "u_id"))
 DT::datatable(df %>% head(30),
               options = list(pageLength = 5), 
               caption = "Table 1: Random examples of the mobile location data.")
+
+# grid cells with data points 
+considered_grid_cells <- df$grid_id %>% unique()
 ```
 
 
@@ -99,7 +102,7 @@ DT::datatable(df %>% head(30),
 
 In order to compare the potential changes of diversity over time, the first step is to separate the data into multiple periods. I use a two-week interval and separate the data into 26 periods.
 
-```{r}
+```{r eval=F}
 # create break points of every two weeks 
 biweekly_seqs <- seq(as.POSIXct("2020-01-01"), as.POSIXct("2020-12-31"), by = "2 weeks") %>%
   as.Date() 
@@ -134,7 +137,9 @@ To operationalize diversity, one important step is to construct the spatial sect
 
 ```{r}
 # step 1: get centers of grid cells 
-grid_centroids <- grids %>% st_centroid()
+grid_centroids <- grids %>% 
+  filter(grid_id %in% considered_grid_cells) %>% 
+  st_centroid()
 ```
 
 ```{r}
@@ -404,7 +409,8 @@ pics_div <- map(df_divs, function(x) spatial_viz(x))
 
 
 ```{r}
-p_map1to9 <- tmap_arrange(pics_div[1:9], nrow = 3, ncol = 3)
+p_map1to9 <- tmap_arrange(pics_div[1:3], nrow = 3, ncol = 3)
+p_map1to9
 ```
 
 <!-- ## Expected results -->
