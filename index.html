@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Qingqing Chen" />
+
+
+<title>Data Analysis and Visualization</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.4/htmlwidgets.js"></script>
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="site_libs/datatables-binding-0.19/datatables.js"></script>
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.10.20/js/jquery.dataTables.min.js"></script>
+<link href="site_libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">GEO511 Spatial Data Science Final Project</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="intro.html">Introduction</a>
+</li>
+<li>
+  <a href="index.html">Analysis</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Data Analysis and Visualization</h1>
+<h4 class="author">Qingqing Chen</h4>
+<h4 class="date">Last compiled date: 11 November, 2021</h4>
+
+</div>
+
+
+<div id="pre-request" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Pre-request</h1>
+<div id="import-necessary-packages" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Import necessary packages</h2>
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, cache=TRUE, 
+                      fig.width = 10, fig.height = 10)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(tmap)
+library(here)
+library(ggplot2)
+library(RColorBrewer)
+library(vegan) # diversity analysis
+library(purrr) # parallel mapping 
+library(DT)</code></pre>
+</div>
+</div>
+<div id="data-preparation" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Data Preparation</h1>
+<div id="study-area-auckland-city" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Study area: Auckland city</h2>
+<p>Figure 1 represents the study area - Auckland city in New Zealand.</p>
+<pre class="r"><code># New Zealand boundary
+sf_akl &lt;- read_sf(here(&quot;data/raw/auckland-boundary/auckland_boundary.shp&quot;))
+
+# New Zealand highway centrelines
+highway_centrlines &lt;- read_sf(here(&quot;data/raw/nz-state-highway-centrelines-SHP/nz-state-highway-centrelines.shp&quot;)) %&gt;% 
+  st_transform(crs = 2193) %&gt;% # convert crs to New Zealand
+  st_join(., sf_akl) %&gt;% # spatial join with Auckland boundary
+  filter(!is.na(city_name)) # remove highway centrelines that is not within Auckland city
+
+# hexagonal grid cell
+grids &lt;- read_sf(here(&quot;data/raw/grids_shp/grids300.shp&quot;), quiet = T) %&gt;% 
+  st_transform(crs = 2193)</code></pre>
+<pre class="r"><code># create a map to overview the study area 
+p_auckland &lt;- tm_shape(sf_akl) +
+    tm_borders(col = &quot;grey&quot;) +
+    tm_shape(highway_centrlines) +
+    tm_lines() +
+    tm_shape(grids) +
+    tm_borders(col = &quot;blue&quot;, alpha = 0.7) +
+    tm_layout(frame = F, 
+              title = &quot;Study area: Auckland, New Zealand&quot;, 
+              title.position = c(&quot;left&quot;, &quot;top&quot;), 
+              title.size = 0.8) 
+tmap_save(p_auckland, here(&quot;img/auckland.png&quot;))</code></pre>
+<div class="figure">
+<img src="img/auckland.png" alt="" />
+<p class="caption">Figure 1. The study area - Auckland city, New Zealand.</p>
+</div>
+</div>
+<div id="mobile-location-data-of-users" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Mobile location data of users</h2>
+<p>To help get sense of the mobile location data, I take 30 data points as examples and present them in Table 1. Each data point includes four attributes:</p>
+<ul>
+<li><code>u_id</code>: the unique identifier for each user;</li>
+<li><code>timestamp</code>: the specific time for each data point created;</li>
+<li><code>grid_id</code>: the location for each data point created;</li>
+<li><code>home</code>: the inferred home location of each user.</li>
+</ul>
+<pre class="r"><code># identified home locations 
+identified_hms &lt;- readRDS(here(&quot;data/raw/hm_hmlc.rds&quot;)) %&gt;% 
+  mutate(home = as.integer(home))
+
+# mobile location data points of users 
+df &lt;- readRDS(here(&quot;data/raw/mobility_sample.rds&quot;)) %&gt;% 
+  sample_frac(size = 1) 
+
+# join home locations to users 
+df &lt;- df %&gt;% left_join(., identified_hms, by = c(&quot;u_id&quot; = &quot;u_id&quot;))
+DT::datatable(df %&gt;% head(30),
+              options = list(pageLength = 5), 
+              caption = &quot;Table 1: Random examples of the mobile location data.&quot;)</code></pre>
+<div id="htmlwidget-554d573d886ae0116e0b" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-554d573d886ae0116e0b">{"x":{"filter":"none","vertical":false,"caption":"<caption>Table 1: Random examples of the mobile location data.<\/caption>","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"],["256","149714","285859","282998","284383","79722","290189","287673","301573","284763","289270","293854","87143","13044","152545","291749","211122","286085","164992","287259","283499","114129","203635","288670","240930","43125","290435","297684","210068","291038"],["2020-02-01T23:14:30Z","2020-06-03T17:49:07Z","2021-01-01T12:01:21Z","2020-12-25T18:19:47Z","2020-11-30T17:05:28Z","2020-12-13T12:42:52Z","2020-12-20T04:22:47Z","2020-12-25T19:38:59Z","2020-12-10T05:29:47Z","2020-12-29T18:26:17Z","2020-12-15T02:46:45Z","2020-12-25T21:09:53Z","2020-12-30T19:22:22Z","2020-07-04T02:13:05Z","2020-07-24T04:48:21Z","2020-12-10T09:03:51Z","2020-12-22T03:06:22Z","2020-12-10T21:56:52Z","2020-09-05T19:27:23Z","2020-12-08T21:12:57Z","2020-12-10T19:35:22Z","2020-08-05T14:23:07Z","2020-07-29T17:25:44Z","2020-12-09T18:13:41Z","2020-10-15T07:54:57Z","2020-08-17T11:43:44Z","2020-12-30T19:52:32Z","2020-12-22T02:33:33Z","2020-12-20T16:19:27Z","2020-12-07T18:35:52Z"],[23502,23056,16469,16661,17066,24189,21529,15379,24024,13228,22464,17160,16140,17656,24012,19738,14937,18865,20156,23777,12253,15345,15342,22907,19305,11410,13736,13819,16137,20140],[18000,23061,16469,13644,17066,24189,21020,16067,24024,13228,22378,17161,16140,17656,23926,19738,14850,23398,20156,23607,8647,15259,15514,22978,19305,11580,13736,13819,13906,20140]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>u_id<\/th>\n      <th>timestamp<\/th>\n      <th>grid_id<\/th>\n      <th>home<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":5,"columnDefs":[{"className":"dt-right","targets":[3,4]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code># grid cells with data points 
+considered_grid_cells &lt;- df$grid_id %&gt;% unique()</code></pre>
+</div>
+</div>
+<div id="social-diversity-analysis" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Social Diversity Analysis</h1>
+<div id="separate-data-with-biweek-interval" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Separate data with biweek interval</h2>
+<p>In order to compare the potential changes of diversity over time, the first step is to separate the data into multiple periods. I use a two-week interval and separate the data into 26 periods.</p>
+<pre class="r"><code># create break points of every two weeks 
+biweekly_seqs &lt;- seq(as.POSIXct(&quot;2020-01-01&quot;), as.POSIXct(&quot;2020-12-31&quot;), by = &quot;2 weeks&quot;) %&gt;%
+  as.Date() 
+
+# give each period a label, easier for subsequent analysis
+prepare_labels &lt;- function(index.start, index.end, weekly_seqs){
+  start_day &lt;- weekly_seqs[index.start] %&gt;% format(., &quot;%b %d&quot;)
+  end_day &lt;- weekly_seqs[index.end] %&gt;% format(., &quot;%b %d&quot;)
+  paste(start_day, &quot;-&quot;, end_day)
+}
+biweek_labels &lt;- map2_chr(seq(1, 26, 1), seq(2, 27, 1), function(x, y) prepare_labels(x, y, biweekly_seqs))
+
+# separate biweek data and store them 
+get_biweekly_data &lt;- function(df, biweek_labels, index.start, index.end){
+  output &lt;- df %&gt;%
+    mutate(date = as.Date(timestamp)) %&gt;% 
+    filter(date &gt;= biweekly_seqs[index.start] &amp; date &lt; biweekly_seqs[index.end]) %&gt;% 
+    mutate(period = biweek_labels[index.start])
+  saveRDS(output, file = paste0(here(&quot;data/derived/biweekly-data/biweek_&quot;), index.start, &quot;.rds&quot;))
+}
+
+## if function: if all biweekly data files exist, do not need to re-run the get_biweekly_data fun
+if(length(list.files(here(&quot;data/derived/biweekly-data&quot;), pattern = &quot;*.rds&quot;)) != 26){
+  ## parallel mapping
+  map2(seq(1, 26, 1), seq(2, 27, 1), function(x, y) get_biweekly_data(df, biweek_labels, x, y))
+}</code></pre>
+</div>
+<div id="construct-spatial-sectors" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Construct spatial sectors</h2>
+<p>To operationalize diversity, one important step is to construct the spatial sectors. The dynamic sectors change along with grid cell locations is created based on different radius distance and directions <span class="citation">[@chen_entangled_2021]</span>. An example of spatial sectors of a grid cell is shown in Figure 2, where visitors visiting from the same sectors are considered as the same “species”. The concept of “species” will be used in the subsequent diversity analysis.</p>
+<pre class="r"><code># step 1: get centers of grid cells 
+grid_centroids &lt;- grids %&gt;% 
+  filter(grid_id %in% considered_grid_cells) %&gt;% 
+  st_centroid()</code></pre>
+<pre class="r"><code># step 2: create buffers for each grid cell 
+## buffer radius
+radius &lt;- c(1000, 3000, 5000, 7000, 10000, 20000, 30000, 60000)
+## draw buffers 
+draw_buffers &lt;- function(df_centroids, radius, grid_index){
+  grid_centroid &lt;- df_centroids %&gt;% filter(grid_id == grid_index)
+  buffers &lt;- list()
+  for (i in 1:length(radius)){
+    if(i == 1){
+      buffers[[i]] &lt;- grid_centroid %&gt;% 
+        st_buffer(., dist = radius[1]) %&gt;% 
+        mutate(radius = radius[1])
+    } else{
+      buffers[[i]] &lt;- st_difference(
+        grid_centroid %&gt;% st_buffer(., dist = radius[i]),
+        grid_centroid %&gt;% st_buffer(., dist = radius[i-1])) %&gt;% 
+        dplyr::select(-grid_id.1) %&gt;% 
+        mutate(radius = radius[i])
+    }
+  }
+  do.call(rbind, buffers)
+}
+
+##!!!note: this step takes more than 1 hour, the processed data is stored in `data/derived/` folder, which can be directly loaded. 
+## process all grid cells 
+if(file.exists(here(&quot;data/derived/grid_buffers.rds&quot;))){
+  grid_buffers &lt;- readRDS(here(&quot;data/derived/grid_buffers.rds&quot;))
+}else{
+  # parallel mapping 
+  grid_buffers &lt;- map_df(grid_centroids$grid_id, function(x) draw_buffers(grid_centroids, radius, x))
+  saveRDS(grid_buffers, file = here(&quot;data/derived/grid_buffers.rds&quot;))
+}</code></pre>
+<pre class="r"><code># step 3: cut buffers to create spatial sectors 
+##cut single buffer
+cut_buffer &lt;- function(buffer, buffer_id, blades, grid_index){
+  lwgeom::st_split(st_geometry(buffer[buffer_id, ]), blades) %&gt;%
+    st_collection_extract(&quot;POLYGON&quot;) %&gt;%
+    st_sf() %&gt;%
+    mutate(grid_id = grid_index) %&gt;%
+    dplyr::select(grid_id) 
+}
+
+get_cut_buffer &lt;- function(df_centroids, df_buffers, shift, grid_index, crs = 2193){
+  # get input grid centroid
+  centroid &lt;- df_centroids %&gt;% 
+    filter(grid_id == grid_index) %&gt;% 
+    st_coordinates() %&gt;%
+    as_tibble() %&gt;%
+    set_names(c(&quot;lon&quot;, &quot;lat&quot;)) # convert geometry to lon and lat
+  # create blades
+  blades &lt;- st_linestring(
+    rbind(c(centroid$lon+shift, centroid$lat),
+          c(centroid$lon-shift, centroid$lat),
+          c(centroid$lon, centroid$lat),
+          c(centroid$lon, centroid$lat+shift),
+          c(centroid$lon, centroid$lat-shift))) %&gt;%
+    st_sfc(., crs = crs)
+  # get buffer for input grid 
+  buffer &lt;- df_buffers %&gt;% filter(grid_id == grid_index)
+  buffer1 &lt;- buffer[1, ] %&gt;% dplyr::select(grid_id) 
+  buffer &lt;- buffer[-1, ] ## do not cut the first inner buffer
+  buffer_ids &lt;- 1:nrow(buffer)
+  ## embed function within another function
+  rbind(buffer1, do.call(rbind, map(buffer_ids, function(x) cut_buffer(buffer, x, blades, grid_index)))) %&gt;%
+    rowid_to_column(var = &quot;sector_id&quot;) 
+}
+
+# process all grid cells 
+if(file.exists(here::here(&quot;data/derived/grid_sectors.rds&quot;))){
+  grid_sectors &lt;- readRDS(here::here(&quot;data/derived/grid_sectors.rds&quot;))
+}else{
+  # parallel mapping 
+  grid_sectors &lt;-  map_df(grid_centroids$grid_id, function(x) get_cut_buffer(grid_centroids, grid_buffers, shift = 60000, x))
+  saveRDS(grid_sectors, file = here::here(&quot;data/derived/grid_sectors.rds&quot;))
+}</code></pre>
+<pre class="r"><code>grid_sectors_example &lt;- grid_sectors %&gt;% 
+  filter(grid_id == 15955) %&gt;% 
+  mutate(sector_id = factor(sector_id))
+
+sectors_showcase &lt;- grid_sectors_example %&gt;% 
+  st_intersection(grids, .) %&gt;% 
+  group_by(sector_id) %&gt;% 
+  summarise() 
+
+p_sector_showcase &lt;- tm_shape(grids) +
+  tm_polygons(col = &quot;white&quot;, alpha = 0.1, border.col = &quot;grey&quot;) +
+  tm_shape(sectors_showcase) +
+  tm_polygons(col = &quot;sector_id&quot;, border.col = &quot;purple&quot;, alpha = 0.9) +
+  tm_shape(grids %&gt;% filter(grid_id == 15955)) +
+  tm_polygons(col = &quot;red&quot;) +  ## target grid 
+  tm_shape(grid_sectors_example) +
+  tm_borders(col = &quot;purple&quot;, lty = 2) +
+  tm_text(text = &quot;sector_id&quot;, size = 0.6, col = &quot;black&quot;) + 
+  tm_layout(legend.show = FALSE)
+tmap_save(p_sector_showcase, here(&quot;img/p_sector_showcase.png&quot;))</code></pre>
+<div class="figure">
+<img src="img/p_sector_showcase.png" alt="" />
+<p class="caption">Figure 2. An example of spatial sectors of a grid cell.</p>
+</div>
+</div>
+<div id="analyze-diversity" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Analyze diversity</h2>
+<p>After constructing spatial sectors for each grid cell, I apply the concept of biological diversity from ecology <span class="citation">[@tramer_bird_1969; @maignan_bio-ecological_2003]</span> and use Shannon’s index (<span class="math inline">\(H\)</span>) to measure the diversity. The Shannon’s index is calculated as:</p>
+<p><span class="math display">\[H = -\sum_{i = 1}^{S}p_ilnp_i\]</span></p>
+<p>where <span class="math inline">\(p_i\)</span> is the proportion of users that allied to “species” <span class="math inline">\(i\)</span> (i.e., sectors in this study) and <span class="math inline">\(S\)</span> is the frequency of “species”.</p>
+<pre class="r"><code>## compute users in each visited grid
+get_visitors_in_visited_grid &lt;- function(users_in_grids, grid_index, grids, identified_hms){
+  users &lt;- users_in_grids %&gt;% filter(grid_id == grid_index)
+  users %&gt;%
+    left_join(., identified_hms) %&gt;%
+    na.omit() %&gt;%
+    rename(visited_grid = grid_id) %&gt;%
+    filter(home != grid_index) %&gt;%  ##remove locals
+    left_join(., grids, by = c(&quot;home&quot; = &quot;grid_id&quot;)) %&gt;%
+    rename(home_geometry = geometry) %&gt;%
+    st_as_sf(crs = 2193)
+}
+
+cal_diversity &lt;- function(visitors_in_visited_grids, grid_sectors, sf_akl, grids, list_grids, index){
+  ##visitors in the visited grid
+  visitors_in_visited_grid &lt;- visitors_in_visited_grids[[index]]
+
+  if(nrow(visitors_in_visited_grid) == 0){
+    output &lt;- tibble()
+  }else{
+    ## visited grid id
+    visited_grid &lt;- unique(visitors_in_visited_grid$visited_grid)
+
+    if(visited_grid %in% list_grids){
+      ## remove locals
+      visitors_in_visited_grid &lt;- visitors_in_visited_grid %&gt;%
+        filter(home != visited_grid)
+
+      ## sectors of the visited grid
+      visited_grid_cutted_buffers &lt;- grid_sectors %&gt;% filter(grid_id == visited_grid)
+      ## sectors within auckland
+      ack_buffer_regions &lt;- st_join(visited_grid_cutted_buffers, sf_akl) %&gt;%
+        na.omit() %&gt;%
+        dplyr::select(-id, -city_name) %&gt;%
+        unique()
+
+      ## get visitors in each regions and remove the duplicates
+      df_joined &lt;- st_join(ack_buffer_regions, visitors_in_visited_grid) %&gt;% na.omit()
+      df_joined_drop_duplicates &lt;- df_joined[!duplicated(df_joined$u_id), ]
+
+      output &lt;- df_joined_drop_duplicates %&gt;%
+        group_by(sector_id) %&gt;%
+        dplyr::summarise(n_user = n_distinct(u_id)) %&gt;%
+        ungroup() %&gt;%
+        mutate(area_km_square = as.numeric(st_area(.)/1000000)) %&gt;%
+        mutate(user_density_per_km = n_user/area_km_square) %&gt;%
+        st_set_geometry(NULL) %&gt;%
+        distinct(sector_id, user_density_per_km) %&gt;%
+        spread(sector_id, user_density_per_km) %&gt;%
+        diversity(index = &quot;shannon&quot;) %&gt;%
+        tibble::enframe(name = NULL) %&gt;%
+        mutate(visited_grid = visited_grid) %&gt;%
+        dplyr::select(visited_grid, value) %&gt;%
+        dplyr::rename(div = value)
+    }else{
+      output &lt;- tibble()
+    }
+  }
+  return(output)
+}
+
+# calculate diversity 
+cal_diversity_biweek &lt;- function(file.nm, label.date_range){
+  # get file path 
+  file_to_read &lt;- paste0(here(&quot;data/derived/biweekly-data/&quot;), file.nm, &quot;.rds&quot;)
+  
+  # read biweekly data 
+  df &lt;- readRDS(file_to_read)
+  
+  # grids with data records 
+  grid_ids &lt;- df$grid_id %&gt;% unique()
+  
+  # distinct users in each grid 
+  users_in_grids &lt;- df %&gt;% distinct(u_id, grid_id)
+  
+  # filter visitors in each grid cell, i.e., users whose home locations are not the same as the visited grid cells 
+  message(&quot;Start aggregating visitors...&quot;)
+  visitors_in_visited_grids &lt;- map(grid_ids, function(x) get_visitors_in_visited_grid(users_in_grids, x, grids, identified_hms))
+  message(&quot;Finish aggregating visitors!&quot;)
+  
+  # filter grid with at least 2 visitors
+  list_grids &lt;- do.call(bind_rows, visitors_in_visited_grids) %&gt;%
+    st_set_geometry(NULL) %&gt;%
+    group_by(visited_grid) %&gt;%
+    summarise(n = n_distinct(u_id)) %&gt;%
+    filter(n &gt;= 2) %&gt;% # filter grid with at least 2 visitors
+    pull(visited_grid)
+  
+  # measure diversity
+  message(&quot;Start calculating diveristy...&quot;) 
+  diversity_shannon &lt;- do.call(rbind, map(1:length(visitors_in_visited_grids), function(x) cal_diversity(visitors_in_visited_grids, grid_sectors, sf_akl, grids, list_grids, x)))
+  # modify the diversity (normalize)
+  diversity_shannon &lt;-  diversity_shannon %&gt;% 
+      left_join(., grids, by = c(&quot;visited_grid&quot; = &quot;grid_id&quot;)) %&gt;%
+      st_as_sf() %&gt;%
+      st_transform(crs = 2193) %&gt;% 
+      mutate(norm_div = (div - min(div))/(max(div) - min(div)),
+             norm_div = round(norm_div, 2), 
+             date_range = label.date_range) %&gt;% 
+      dplyr::select(visited_grid, div, norm_div, date_range)
+  message(&quot;Finish calculating diversity!&quot;)
+  
+  # save the result
+  saveRDS(diversity_shannon, file = paste0(here(&quot;data/derived/biweekly-diversity/&quot;), &quot;div_&quot;, file.nm, &quot;.rds&quot;))
+}
+
+files &lt;- paste0(&quot;biweek_&quot;, seq(1, 26, 1))
+##!!note: this process takes around 5 hrs, the computed results are stored under `data/derived/biweekly-diversity` folder
+map2(files, biweek_labels, purrrogress::with_progress(function(x, y) cal_diversity_biweek(file.nm = x, label.date_range = y)))</code></pre>
+<pre class="r"><code># load computed diversity 
+file_pathes &lt;- paste0(here::here(&quot;data/derived/biweekly-diversity/&quot;), &quot;div_biweek_&quot;, seq(1, 26, 1), &quot;.rds&quot;)
+df_divs &lt;- map(file_pathes, function(x) readRDS(x))
+df_divs[[1]] %&gt;% head()</code></pre>
+<pre><code>## Simple feature collection with 6 features and 4 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 1755917 ymin: 5905575 xmax: 1769417 ymax: 5935279
+## Projected CRS: NZGD2000 / New Zealand Transverse Mercator 2000
+## # A tibble: 6 × 5
+##   visited_grid    div norm_div date_range                               geometry
+##          &lt;int&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;                          &lt;MULTIPOLYGON [m]&gt;
+## 1        17820 0.0701     0.06 Jan 01 - Jan 15 (((1759517 5905575, 1759367 5905…
+## 2        15898 0.0111     0.01 Jan 01 - Jan 15 (((1756067 5934933, 1756043 5934…
+## 3        16387 0.308      0.25 Jan 01 - Jan 15 (((1756967 5920903, 1756828 5920…
+## 4        23410 0.500      0.41 Jan 01 - Jan 15 (((1769267 5905835, 1769117 5905…
+## 5        16979 0.637      0.53 Jan 01 - Jan 15 (((1758017 5915447, 1757867 5915…
+## 6        16645 0.961      0.79 Jan 01 - Jan 15 (((1757417 5920644, 1757267 5920…</code></pre>
+<pre class="r"><code>spatial_viz &lt;- function(df_div, main.title_size = 1, legend.title_size = 0.5,  
+                        legend.text_size = 0.35, legend_width = 0.5){
+  range_biweek &lt;- df_div$date_range %&gt;% unique()
+  tm_shape(sf_akl) +
+      tm_borders(col = &quot;grey&quot;) + 
+      tm_shape(highway_centrlines) +
+      tm_lines(col = &quot;grey20&quot;, lwd = 2, alpha = 0.7) +
+      tm_shape(df_div) +
+      tm_fill(&quot;norm_div&quot;,
+              palette = &quot;OrRd&quot;,
+              style = &quot;fixed&quot;,
+              breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0),
+              legend.is.portrait = T,
+              legend.format = list(digits = 2),
+              title = &quot;Norm.Diversity&quot;) +
+    tm_layout(main.title = paste0(&quot;Period: &quot;, range_biweek),
+              main.title.size = main.title_size,
+              frame = FALSE,
+              legend.frame = F,
+              legend.bg.color = &quot;white&quot;,
+              legend.title.size = legend.title_size,
+              legend.text.size = legend.text_size,
+              legend.width = legend_width,
+              legend.position = c(&quot;right&quot;, &quot;top&quot;))
+}
+
+pics_div &lt;- map(df_divs, function(x) spatial_viz(x))</code></pre>
+<pre class="r"><code>p_map1to9 &lt;- tmap_arrange(pics_div[1:3], nrow = 3, ncol = 3)
+p_map1to9</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" width="960" /></p>
+<!-- ## Expected results -->
+<!-- 1. The social diversity does change under the COVID-19 impacts.  -->
+<!-- 2. The diversity around CDB may have a significant change.  -->
+<!-- 3. Neighborhoods with relatively high diversity may have similar character(s) or certain urban functions.  -->
+<!-- 4. The most dense place may not be the most diverse place. -->
+</div>
+</div>
+<div id="results" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Results</h1>
+<!-- [~200 words] -->
+<!-- Tables and figures (maps and other graphics) are carefully planned to convey the results of your analysis. Intense exploration and evidence of many trials and failures. The author looked at the data in many different ways before coming to the final presentation of the data. -->
+<!-- Show tables, plots, etc. and describe them. -->
+</div>
+<div id="conclusions" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Conclusions</h1>
+<!-- [~200 words] -->
+<!-- Clear summary adequately describing the results and putting them in context. Discussion of further questions and ways to continue investigation. -->
+</div>
+<div id="references" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> References</h1>
+<!-- All sources are cited in a consistent manner -->
+</div>
+
+<!-- give the footer some space -->
+<br/>
+<br/>
+
+<footer id="site-footer">
+  <div id="footer1">
+  This website is a project for Adam Wilson's <a href="https://wilsonlab.io/GEO511"><i> Spatial Data Science (GEO511) </i></a>Course at the University at Buffalo
+  </div>
+  <div id="footer2">
+  <a rel="license" property="http://creativecommons.org/ns#license"
+  href="http://creativecommons.org/licenses/by/4.0/" ><img src="img/cc-by.svg" alt="cc-by"/></a> 
+  </div>
+</footer>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
