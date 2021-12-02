@@ -5,18 +5,13 @@ date: "Last compiled date: `r format(Sys.time(), '%d %B, %Y')`"
 bibliography: references.bib
 ---
 
-<style>
-body {text-align: justify}
-</style>
-
-
 # Introduction 
 
 The COVID-19 virus has caused unprecedented impacts on people's day-to-day life, where cities around the world are still very much suffering from the pandemic. In order to combat the pandemic, different countries have implemented a series of stringent policies to mitigate the transmission of the virus. Accompanying these preventive measures are the potential changes in human movement trajectories. What does this mean to the urban environment and social activities that we know before the pandemic? How does human footprints change over time under the impacts of the pandemic? With the new emerging big data and crowd sourcing techniques, a wealth of geospatial data, such as location-based services (LBS), volunteered geographic information (VGI) data, is becoming more and more available. This provides the potentials for analyzing human mobility patterns at a much granular scale. In this project, I aim to analyze human mobility patterns over time to identify the potential changes of social diversity by leveraging mobile location data. The social diversity here refers to the diversity of home locations of visitors in an urban space. In other words, instead of focusing on the physical environment, the diversity is measured from the perspective of the social dimension of urban spaces based on the activity profiles of their visitors. Taking Auckland city as a case study, I try to answer three specific questions as listed below: 
 
-1. How does social diversity change over time under the COVID-19 pandemic? 
-2. Where are the most diverse neighbourhoods? 
-3. Are there any similar character(s) of neighbourhoods with a relatively high value of diversity? 
+1. What is the spatial pattern of diversity? 
+2. Does the diversity change over time under the COVID-19 impact and the corresponded stringent policies put in place?
+3. How does the diversity change over time?
 
 # Data 
 
@@ -27,9 +22,10 @@ A shape file provides urban and rural areas for all New Zealand. The data is col
 **2. New Zealand State Highway Centrelines**
 
 A shape file provides the centrelines of New Zealand's state highway system. The data is collected from [NZ Transport Agency](https://nzta.koordinates.com/layer/1331-nz-state-highway-centrelines/). The downloaded data is stored under `data/raw/nz-state-highway-centrelines-SHP/` folder. 
+
 **3. Hexagonal grid cells data set**
 
-A data set that contains hexagonal grid cells with a 300 meter resolution covering the study area (i.e., Auckland city). Each 300m hexagonal grid cell is considered as a neighbourhood, which is used as the basic unit for subsequent analysis. The data set is stored under `data/raw/grids_shp/` folder. 
+A data set that contains hexagonal grid cells with a 300 meter resolution covering the study area (i.e., Auckland city). Each 300m hexagonal grid cell is considered as a neighborhood, which is used as the basic unit for subsequent analysis. The data set is stored under `data/raw/grids_shp/` folder. 
 
 **4. Individual mobile location data set**
 
