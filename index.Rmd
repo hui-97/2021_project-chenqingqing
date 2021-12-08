@@ -83,8 +83,8 @@ identified_hms <- readRDS(here("data/raw/hm_hmlc.rds")) %>%
 
 # mobile location data points of users 
 df <- readRDS(here("data/raw/mobility_sample.rds")) %>% 
-  sample_frac(size = 1) 
-
+  sample_frac(size = 1)
+ 
 # join home locations to users 
 df <- df %>% left_join(., identified_hms, by = c("u_id" = "u_id"))
 DT::datatable(df %>% head(30),
